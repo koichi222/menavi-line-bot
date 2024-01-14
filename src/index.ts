@@ -14,6 +14,7 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 app.post("/api/webhook", async (c) => {
   const data = await c.req.json();
+  console.log(data)
 
   const events: WebhookEvent[] = (data as any).events;
 
@@ -47,12 +48,43 @@ app.post("/api/generate_message", async (c) => {
 
 async function replyGeneratedMessage(env: Bindings, text: string, replyToken: string) {
   try {
-    const generatedMessage = await generateMessageAndSaveHistory(text, env);
-    console.log(generatedMessage);
+    const lineClient = new Line(env.CHANNEL_ACCESS_TOKEN);
+
+    console.log("*** hoge ***")
+    console.log(`text: ${text}`)
+    console.log(`replytoken: ${replyToken}`)
+
+    if (text === "検索") {
+      console.log("inif");
+  
+      await lineClient.replyFlexMessage("検索条件を教えてください。", replyToken)
+          .then(response => {
+            // レスポンスの内容を整形してログに出力
+              console.log("replyBubbleMessage response:", JSON.stringify(response, null, 2));
+          })
+          .catch(error => {
+            // エラーをログに出力
+              console.error("replyBubbleMessage error:", JSON.stringify(error, null, 2));
+          });
+    }
+
+    //if (text === "検索") {
+      //await lineClient.replyBubbleMessage("検索条件を教えてください。", replyToken);
+    //  try {
+    //      const response = await lineClient.replyBubbleMessage(text, replyToken);
+    //      // レスポンスの内容を整形してログに出力
+    //      console.log("replyBubbleMessage response:", JSON.stringify(response, null, 2));
+    //  } catch (error) {
+          // エラーをログに出力
+    //      console.error("replyBubbleMessage error:", JSON.stringify(error, null, 2));
+    //  }
+   // }
+
+    //const generatedMessage = await generateMessageAndSaveHistory(text, env);
+    //console.log(generatedMessage);
 
     // Reply to the user
-    const lineClient = new Line(env.CHANNEL_ACCESS_TOKEN);
-    await lineClient.replyMessage(generatedMessage, replyToken);
+    //await lineClient.replyMessage(generatedMessage, replyToken);
   } catch (err: unknown) {
     if (err instanceof Error) console.error(err);
     const lineClient = new Line(env.CHANNEL_ACCESS_TOKEN);
