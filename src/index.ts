@@ -54,10 +54,9 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
     console.log(`text: ${text}`)
     console.log(`replytoken: ${replyToken}`)
 
-    if (text === "検索") {
+    if (text === "お気に入り") {
       console.log("inif");
-  
-      await lineClient.replyFlexMessage("検索条件を教えてください。", replyToken)
+      await lineClient.replyFavorites(replyToken)
           .then(response => {
             // レスポンスの内容を整形してログに出力
               console.log("replyBubbleMessage response:", JSON.stringify(response, null, 2));
