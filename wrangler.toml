@@ -4,5 +4,5 @@ name = "english-line-bot"
 
 [[d1_databases]]
 binding = "DB" # i.e. available in your Worker on env.DB
-database_id = "f43f9b85-c94e-4065-beea-1d48a0c0a778" 
-database_name = "english-line-bot-db"
+database_id = "29045562-f901-4c1c-bb29-93c824104628"
+database_name = "mennavi"

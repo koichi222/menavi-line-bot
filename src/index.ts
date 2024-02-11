@@ -2,7 +2,8 @@ import { TextEventMessage, WebhookEvent } from "@line/bot-sdk";
 import { Hono } from "hono";
 import { Line } from "./line";
 import { OpenAI } from "./openai";
-import { Conversation } from "./tables";
+import { formatAttendanceResults } from './tools/utils';
+import { AttendanceResult, FormattedAttendance } from "./tables";
 
 type Bindings = {
   DB: D1Database;
@@ -67,17 +68,19 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
           });
     }
 
-    //if (text === "検索") {
-      //await lineClient.replyBubbleMessage("検索条件を教えてください。", replyToken);
-    //  try {
-    //      const response = await lineClient.replyBubbleMessage(text, replyToken);
-    //      // レスポンスの内容を整形してログに出力
-    //      console.log("replyBubbleMessage response:", JSON.stringify(response, null, 2));
-    //  } catch (error) {
-          // エラーをログに出力
-    //      console.error("replyBubbleMessage error:", JSON.stringify(error, null, 2));
-    //  }
-   // }
+    if (text === "検索") {
+      var user_id = "U09e867f2177265774544a9e6b536c7f0"
+      var query = `SELECT * FROM attendances AS at LEFT JOIN shops ON at.shop_id = shops.id 
+      LEFT JOIN casts ON at.cast_id = casts.id
+      INNER JOIN ( SELECT cast_id, faved_at FROM favorites 
+        WHERE user_id IN ( SELECT id FROM users WHERE line_user_id = '${user_id}' ) ) AS fav_casts
+        ON at.cast_id = fav_casts.cast_id ORDER BY fav_casts.faved_at DESC;`
+      const { results } = await env.DB.prepare(query).all<AttendanceResult>();
+      const formattedResults = formatAttendanceResults(results);
+      console.log(formattedResults);
+      await lineClient.replyAttendance(results,replyToken)
+      console.log("replyBubbleMessage response:", JSON.stringify(results, null, 2));
+    }
 
     //const generatedMessage = await generateMessageAndSaveHistory(text, env);
     //console.log(generatedMessage);
@@ -93,7 +96,13 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
 
 async function generateMessageAndSaveHistory(text: string, env: Bindings) {
   // Fetch 2 conversation from D1
-  const { results } = await env.DB.prepare(`select * from conversations order by id desc limit 15`).all<Conversation>();
+  var user_id = "U09e867f2177265774544a9e6b536c7f0"
+  var query = `SELECT * FROM attendances AS at LEFT JOIN shops ON at.shop_id = shops.id 
+  LEFT JOIN casts ON at.cast_id = casts.id
+  INNER JOIN ( SELECT cast_id, faved_at FROM favorites 
+    WHERE user_id IN ( SELECT id FROM users WHERE line_user_id = '${user_id}' ) ) AS fav_casts
+    ON at.cast_id = fav_casts.cast_id ORDER BY fav_casts.faved_at DESC;`
+  const { results } = await env.DB.prepare(query).all<AttendanceResult>();
 
   // Generate answer with OpenAI
   const openaiClient = new OpenAI(env.OPENAI_API_KEY);
