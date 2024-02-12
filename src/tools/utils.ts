@@ -11,27 +11,47 @@ export function convertDateFormat(dateStr) {
 }
 
 export function formatAttendanceResults(results: AttendanceResult[]): FormattedAttendance[] {
-  const formatted: FormattedAttendance[] = [];
+  const formattedResults: FormattedAttendance[] = [];
 
   results.forEach(result => {
-      let attendance = {
-          date: result.date,
-          startTime: result.startTime,
-          endTime: result.endTime
-      };
-
-      const existing = formatted.find(f => f.castId === result.castId && f.shopId === result.shopId);
-      if (existing) {
-          existing.attendances.push(attendance);
-      } else {
-          formatted.push({
-              castId: result.castId,
-              name: result.castName,
-              shopId: result.shopId,
-              attendances: [attendance]
-          });
-      }
+    // 既存のキャスト情報を検索
+    let castEntry = formattedResults.find(entry => entry.castId === result.cast_id);
+    // キャスト情報が既に存在する場合は、出席情報のみ追加
+    if (castEntry) {
+      castEntry.attendances.push({
+        id: result.id,
+        room: result.room,
+        weekDay: result.week_day,
+        startTime: result.start_time,
+        endTime: result.end_time,
+        reservationUrl: result.reservation_url,
+      });
+    } else {
+      // 新しいキャスト情報を作成し、初めての出席情報を追加
+      formattedResults.push({
+        castId: result.cast_id,
+        castName: result.cast_name,
+        castProfile: result.cast_profile,
+        bust: result.bast, // オリジナルの質問では `bast` とされていましたが、おそらく `bust` の誤りです
+        waist: result.weist, // オリジナルでは `weist` とされていましたが、`waist` の誤りかもしれません
+        hip: result.hip,
+        twitterId: result.twitter_id,
+        favedAt: result.faved_at,
+        shopId: result.shop_id,
+        shopName: result.shop_name,
+        shopArea: result.shop_area,
+        shopUrl: result.shop_url,
+        attendances: [{
+          id: result.id,
+          room: result.room,
+          weekDay: result.week_day,
+          startTime: result.start_time,
+          endTime: result.end_time,
+          reservationUrl: result.reservation_url,
+        }],
+      });
+    }
   });
 
-  return formatted;
+  return formattedResults;
 }

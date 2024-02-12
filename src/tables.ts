@@ -1,50 +1,47 @@
 export type AttendanceResult = {
   // attendances テーブルのカラム
   id: number;
-  shopId: number;
-  castId: number;
   room: string;
   date: Date;
   weekDay: string;
   startTime: string;
   endTime: string;
-  url: string;
-  reservationUrl: string;
-  // shops テーブルのカラム
-  Area: string;
-  shopUrl: string;
-  // casts テーブルのカラム
-  name: string;
-  profile: string;
+  castId: number;
+  castName: string;
+  castProfile: string;
   bast: number;
   weist: number;
   hip: number;
   twitterId: string;
-  // favorites テーブルのカラム
+  shopId: number;
+  shopName: string;
+  shopArea: string;
   favedAt: Date;
+  shopUrl: string;
+  reservationUrl: string;
 };
 
 export type FormattedAttendance = {
   // attendances テーブルのカラム
-  id: number;
-  shopId: number;
-  area: string;
-  shopUrl: string;
   castId: number;
-  name: string;
-  room: string;
-  url: string;
-  reservationUrl: string;
-  profile: string;
+  castName: string;
+  castProfile: string;
   bast: number;
   weist: number;
   hip: number;
+  shopId: number;
+  shopName: string;
+  shopArea: string;
+  shopUrl: string;
   twitterId: string;
   attendances: {
+    id: number;
     date: Date;
+    room: string;
     weekDay: string;
     startTime: string;
     endTime: string;
+    reservationUrl: string;
   }[];
   favedAt: Date;
 };

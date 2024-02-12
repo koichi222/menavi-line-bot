@@ -70,16 +70,61 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
 
     if (text === "検索") {
       var user_id = "U09e867f2177265774544a9e6b536c7f0"
-      var query = `SELECT * FROM attendances AS at LEFT JOIN shops ON at.shop_id = shops.id 
-      LEFT JOIN casts ON at.cast_id = casts.id
-      INNER JOIN ( SELECT cast_id, faved_at FROM favorites 
-        WHERE user_id IN ( SELECT id FROM users WHERE line_user_id = '${user_id}' ) ) AS fav_casts
-        ON at.cast_id = fav_casts.cast_id ORDER BY fav_casts.faved_at DESC;`
+
+      var query = `SELECT
+          at.id,
+          at.room,
+          at.date,
+          at.week_day,
+          at.start_time,
+          at.end_time,
+          ca.id AS cast_id,
+          ca.name AS cast_name,
+          ca.profile AS cast_profile,
+          ca.bast,
+          ca.weist,
+          ca.hip,
+          at.shop_id,
+          sp.name AS shop_name,
+          sp.area AS shop_area,
+          fav_casts.faved_at,
+          sp.url,
+          at.reservation_url
+      FROM
+          attendances AS at
+          LEFT JOIN
+              shops AS sp
+          ON  at.shop_id = sp.id
+          LEFT JOIN
+              casts AS ca
+          ON  at.cast_id = ca.id
+          INNER JOIN
+              (
+                  SELECT
+                      cast_id,
+                      faved_at
+                  FROM
+                      favorites
+                  WHERE
+                      user_id IN(
+                          SELECT
+                              id
+                          FROM
+                              users
+                          WHERE
+                              line_user_id = '${user_id}'
+                      )
+              ) AS fav_casts
+          ON  at.cast_id = fav_casts.cast_id
+      ORDER BY
+          fav_casts.faved_at DESC`
       const { results } = await env.DB.prepare(query).all<AttendanceResult>();
+      console.log("result:",results);
       const formattedResults = formatAttendanceResults(results);
-      console.log(formattedResults);
-      await lineClient.replyAttendance(results,replyToken)
-      console.log("replyBubbleMessage response:", JSON.stringify(results, null, 2));
+      console.log("formattedResult:",formattedResults);
+      var res = await lineClient.replyAttendances(formattedResults,replyToken)
+      console.log("replyBubbleMessage results:", JSON.stringify(results, null, 2));
+      console.log("replyBubbleMessage response:", JSON.stringify(res, null, 2));
     }
 
     //const generatedMessage = await generateMessageAndSaveHistory(text, env);

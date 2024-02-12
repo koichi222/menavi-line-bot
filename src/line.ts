@@ -35,7 +35,6 @@ export class Line {
 
     for (var i = 0; i < 9; i++) {
       // Flexメッセージに設定するBubbleメッセージを作成
-
       var bubbleMsg = {
           "type": "bubble",
           "size": "hecto",
@@ -256,7 +255,7 @@ export class Line {
 
   public async replyAttendances(results: FormattedAttendance[], replyToken: string): Promise<Response | null> {
     // DBから検索結果をリロードする
-
+    console.log("results:", results);
     var bubbleList = new Array();
     for (const result of results.reverse()) {
       var bubbleMsg = {
@@ -274,7 +273,7 @@ export class Line {
             "contents": [
               {
                 "type": "text",
-                "text": result.Name,
+                "text": result.castName,
                 "weight": "bold",
                 "size": "xl"
               },
@@ -290,7 +289,7 @@ export class Line {
                 "contents": [
                   {
                     "type": "text",
-                    "text": "Shop Name",
+                    "text": result.shopName,
                     "size": "sm",
                     "color": "#666666"
                   }
@@ -302,7 +301,7 @@ export class Line {
                 "contents": [
                   {
                     "type": "text",
-                    "text": result.Profile,
+                    "text": result.castProfile,
                     "size": "md",
                     "color": "#666666"
                   }
@@ -316,6 +315,63 @@ export class Line {
                 "type": "box",
                 "layout": "vertical",
                 "contents": [
+                  {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "contents": [
+                      {
+                        "type": "text",
+                        "text": "01/20(土)",
+                        "size": "md",
+                        "weight": "bold",
+                        "color": "#3288c9"
+                      },
+                      {
+                        "type": "text",
+                        "text": "11:00〜翌5:00",
+                        "size": "sm",
+                        "color": "#555555"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "contents": [
+                      {
+                        "type": "text",
+                        "text": "01/21(日)",
+                        "size": "md",
+                        "weight": "bold",
+                        "color": "#D0021B"
+                      },
+                      {
+                        "type": "text",
+                        "text": "11:00〜翌5:00",
+                        "size": "sm",
+                        "color": "#555555"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "contents": [
+                      {
+                        "type": "text",
+                        "text": "01/22(月)",
+                        "size": "md",
+                        "weight": "bold",
+                        "color": "#111111"
+                      },
+                      {
+                        "type": "text",
+                        "text": "11:00〜翌5:00",
+                        "size": "sm",
+                        "color": "#555555"
+                      }
+                    ]
+                  }
                 ],
                 "spacing": "sm",
                 "paddingAll": "13px"
@@ -346,55 +402,6 @@ export class Line {
         }
       bubbleList.push(bubbleMsg);
     }
-
-    var nextCnt = 10
-    if (nextCnt > 0){
-      var bubbleMsg2 = {
-        "type": "bubble",
-        "size": "hecto",
-        "body": {
-          "type": "box",
-          "layout": "vertical",
-          "contents": [
-            {
-              "type": "text",
-              "text": "続きのお店情報があります！",
-              "wrap": true,
-              "color": "#c71585"
-            },
-            {
-              "type": "text",
-              "text": "【残り件数】" + nextCnt + "件",
-              "wrap": true,
-              "margin": "xl"
-            }
-          ]
-        },
-        "footer": {
-          "type": "box",
-          "layout": "horizontal",
-          "contents": [
-            {
-              "type": "button",
-              "action": {
-                "type": "postback",
-                "label": "続きを見る",
-                "data": "nextResults",
-              }
-            }
-          ]
-        },
-        "styles": {
-          "footer": {
-            "backgroundColor": "#e3adc1",
-            "separator": true,
-            "separatorColor": "#c0c0c0"
-          }
-        }
-      };
-      bubbleList.push(bubbleMsg2);
-    }
-
     //Flexメッセージ作成
     var flexMsg = {
       "type": "flex",
@@ -407,16 +414,28 @@ export class Line {
 
     console.log(flexMsg);
     console.log(replyToken);
-    return await fetch(`${this.baseUrl}/v2/bot/message/reply`, {
-      method: "POST",
-      headers: this.headers,
-      body: JSON.stringify({
-        replyToken: replyToken,
-        messages: [flexMsg],
-      }),
-    }).catch((err) => {
+
+    try {
+      const response = await fetch(`${this.baseUrl}/v2/bot/message/reply`, {
+        method: "POST",
+        headers: this.headers,
+        body: JSON.stringify({
+          replyToken: replyToken,
+          messages: [flexMsg],
+        }),
+      });
+      // レスポンスが成功したか確認
+      if (!response.ok) {
+        const responseData = await response.json();
+        throw new Error(`LINE API responded with status: ${JSON.stringify(responseData, null, 2)}`);
+      }
+      // レスポンスボディをJSONとして解析
+      const responseData = await response.json();
+      return responseData; // JSONデータを返す
+    } catch (err) {
       console.log(`LINE API error: ${err}`);
-      return null;
-    });
+      return null; // エラーが発生した場合はnullを返す
+    }
   }
 }
+
