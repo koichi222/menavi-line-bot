@@ -386,8 +386,8 @@ export class Line {
                 "type": "button",
                 "action": {
                   "type": "postback",
-                  "label": "予約する",
-                  "data": "action=book&itemid=123"
+                  "label": "お気に入り解除",
+                  "data": "action=removeFavorite&favoriteId="+result.favoriteId
                 },
                 "color": "#3CC932",
                 "style": "primary"

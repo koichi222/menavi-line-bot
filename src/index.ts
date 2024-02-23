@@ -3,7 +3,8 @@ import { Hono } from "hono";
 import { Line } from "./line";
 import { OpenAI } from "./openai";
 import { formatAttendanceResults } from './tools/utils';
-import { AttendanceResult, FormattedAttendance } from "./tables";
+import { AttendanceResult, FormattedAttendance, RemoveFavoriteParams } from "./tables";
+import internal from "stream";
 
 type Bindings = {
   DB: D1Database;
@@ -18,27 +19,40 @@ app.post("/api/webhook", async (c) => {
   console.log(data)
 
   const events: WebhookEvent[] = (data as any).events;
+  const event = events[0];
 
-  const event = events
-    .map((event: WebhookEvent) => {
-      if (event.type != "message" || event.message.type != "text") {
-        return;
-      }
-      return event;
-    })
-    .filter((event) => event)[0];
-
-  if (!event) {
-    console.log(`No event: ${events}`);
-    return c.json({ message: "ok" });
-  }
-
+  console.log("event:", event);
   const { replyToken } = event;
-  const { text } = event.message as TextEventMessage;
+  if (event) {
+    if (event.type === "postback") {
 
-  c.executionCtx.waitUntil(replyGeneratedMessage(c.env, text, replyToken));
+        const postbackData = event.postback.data; // postbackデータを取得
+        const params = postbackData.split('&').reduce((acc, param) => {
+            const [key, value] = param.split('=');
+            acc[key] = value;
+            return acc;
+        }, {});
+        const typedParams = params as RemoveFavoriteParams;
+        console.log("postback params:",params);
+        console.log("postback typedParams:",typedParams);
+        c.executionCtx.waitUntil(removeFavorite(c.env, replyToken, typedParams));
+        // postbackの場合の処理
+        return c.json({ message: "ok" });
 
-  return c.json({ message: "ok" });
+    } else if (event.type === "message" && event.message.type === "text") {
+        const { text } = event.message as TextEventMessage;
+        c.executionCtx.waitUntil(replyGeneratedMessage(c.env, text, replyToken));
+        return c.json({ message: "ok" });
+    } else {
+        // その他の場合の処理
+        console.log("Unknown event type detected");
+        // ここにその他の処理を記述
+    }
+  } else {
+      console.log("No events found in the array");
+      console.log(`No event: ${events}`);
+      return c.json({ message: "ok" });
+  }
 });
 
 app.post("/api/generate_message", async (c) => {
@@ -51,11 +65,10 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
   try {
     const lineClient = new Line(env.CHANNEL_ACCESS_TOKEN);
 
-    console.log("*** hoge ***")
     console.log(`text: ${text}`)
     console.log(`replytoken: ${replyToken}`)
 
-    if (text === "お気に入り") {
+    if (text === "検索") {
       console.log("inif");
       await lineClient.replyFavorites(replyToken)
           .then(response => {
@@ -68,7 +81,7 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
           });
     }
 
-    if (text === "検索") {
+    if (text === "お気に入り") {
       var user_id = "U09e867f2177265774544a9e6b536c7f0"
 
       var query = `SELECT
@@ -87,6 +100,7 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
           at.shop_id,
           sp.name AS shop_name,
           sp.area AS shop_area,
+          fav_casts.favorite_id,
           fav_casts.faved_at,
           sp.url,
           at.reservation_url
@@ -101,6 +115,7 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
           INNER JOIN
               (
                   SELECT
+                      id as favorite_id,
                       cast_id,
                       faved_at
                   FROM
@@ -113,7 +128,7 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
                               users
                           WHERE
                               line_user_id = '${user_id}'
-                      )
+                      ) AND is_deleted = 0
               ) AS fav_casts
           ON  at.cast_id = fav_casts.cast_id
       ORDER BY
@@ -126,12 +141,6 @@ async function replyGeneratedMessage(env: Bindings, text: string, replyToken: st
       console.log("replyBubbleMessage results:", JSON.stringify(results, null, 2));
       console.log("replyBubbleMessage response:", JSON.stringify(res, null, 2));
     }
-
-    //const generatedMessage = await generateMessageAndSaveHistory(text, env);
-    //console.log(generatedMessage);
-
-    // Reply to the user
-    //await lineClient.replyMessage(generatedMessage, replyToken);
   } catch (err: unknown) {
     if (err instanceof Error) console.error(err);
     const lineClient = new Line(env.CHANNEL_ACCESS_TOKEN);
@@ -161,6 +170,22 @@ async function generateMessageAndSaveHistory(text: string, env: Bindings) {
     .run();
 
   return generatedMessage;
+}
+
+async function addFavorite(env: Bindings, replyToken: string) {
+}
+
+async function removeFavorite(env: Bindings, replyToken: string, params: RemoveFavoriteParams) {
+  console.log("params1:", params);
+  try {
+    await env.DB.prepare(`UPDATE favorites SET is_deleted = TRUE WHERE id = ?`)
+      .bind(params.favoriteId)
+      .run();
+  } catch (err: unknown) {
+    if (err instanceof Error) console.error(err);
+    const lineClient = new Line(env.CHANNEL_ACCESS_TOKEN);
+    await lineClient.replyMessage("I am not feeling well right now.", replyToken);
+  }
 }
 
 export default app;

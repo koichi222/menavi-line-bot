@@ -16,7 +16,8 @@ CREATE TABLE users (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER,
-    updated_by INTEGER
+    updated_by INTEGER,
+    is_deleted BOOLEAN
 );
 
 -- Shops Table
@@ -28,7 +29,8 @@ CREATE TABLE shops (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER,
-    updated_by INTEGER
+    updated_by INTEGER,
+    is_deleted BOOLEAN DEFAULT FALSE
 );
 
 -- Casts Table
@@ -45,6 +47,7 @@ CREATE TABLE casts (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER,
     updated_by INTEGER,
+    is_deleted BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (shop_id) REFERENCES shops(id)
 );
 
@@ -57,6 +60,7 @@ CREATE TABLE tweets (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER,
     updated_by INTEGER,
+    is_deleted BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (cast_id) REFERENCES casts(id)
 );
 
@@ -76,6 +80,7 @@ CREATE TABLE attendances (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER,
     updated_by INTEGER,
+    is_deleted BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (shop_id) REFERENCES shops(id),
     FOREIGN KEY (cast_id) REFERENCES casts(id)
 );
@@ -90,6 +95,7 @@ CREATE TABLE favorites (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER,
     updated_by INTEGER,
+    is_deleted BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (cast_id) REFERENCES casts(id)
 );
@@ -101,5 +107,6 @@ CREATE TABLE reviews (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     price INTEGER,
     score INTEGER,
+    is_deleted BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (cast_id) REFERENCES casts(id)
 );

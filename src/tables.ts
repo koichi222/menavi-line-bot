@@ -16,6 +16,7 @@ export type AttendanceResult = {
   shopId: number;
   shopName: string;
   shopArea: string;
+  favoriteId: number;
   favedAt: Date;
   shopUrl: string;
   reservationUrl: string;
@@ -23,6 +24,7 @@ export type AttendanceResult = {
 
 export type FormattedAttendance = {
   // attendances テーブルのカラム
+  favoriteId: number;
   castId: number;
   castName: string;
   castProfile: string;
@@ -46,4 +48,7 @@ export type FormattedAttendance = {
   favedAt: Date;
 };
 
-
+export type RemoveFavoriteParams {
+  action: 'removeFavorite';
+  favoriteId: string;
+}

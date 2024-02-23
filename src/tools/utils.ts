@@ -36,6 +36,7 @@ export function formatAttendanceResults(results: AttendanceResult[]): FormattedA
         waist: result.weist, // オリジナルでは `weist` とされていましたが、`waist` の誤りかもしれません
         hip: result.hip,
         twitterId: result.twitter_id,
+        favoriteId: result.favorite_id,
         favedAt: result.faved_at,
         shopId: result.shop_id,
         shopName: result.shop_name,
